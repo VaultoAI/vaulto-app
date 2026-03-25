@@ -1,0 +1,562 @@
+/**
+ * Vaulto Trading App Styles
+ */
+
+/* === CSS Variables === */
+:root {
+  --bg: #FAFAF7;
+  --bg-surface: #FFFFFF;
+  --bg-muted: #F2F1EC;
+  --bg-accent: #0A0F1E;
+  --text: #1A1A18;
+  --text-secondary: #6B6B64;
+  --text-tertiary: #9C9C94;
+  --border: rgba(0,0,0,0.08);
+  --border-strong: rgba(0,0,0,0.15);
+  --blue: #2952CC;
+  --blue-light: #EEF2FF;
+  --blue-mid: rgba(41,82,204,0.12);
+  --red: #C4342D;
+  --red-light: #FEF2F2;
+  --red-mid: rgba(196,52,45,0.12);
+  --green: #1A7D46;
+  --green-light: #ECFDF5;
+  --amber: #A36207;
+  --serif: 'Instrument Serif', Georgia, serif;
+  --sans: 'DM Sans', -apple-system, sans-serif;
+  --mono: 'DM Mono', 'SF Mono', monospace;
+}
+
+/* === Reset & Base === */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--sans);
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+::selection {
+  background: var(--blue-mid);
+}
+
+/* === Layout === */
+.app-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* === Header === */
+.header {
+  background: var(--bg-accent);
+  padding: 16px 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo-text {
+  font-family: var(--serif);
+  font-size: 24px;
+  color: #fff;
+  font-weight: 400;
+  letter-spacing: -0.5px;
+}
+
+/* === Market Info === */
+.market-info-section {
+  padding: 32px 0 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.market-title {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 400;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.market-meta {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* === Position Tabs === */
+.position-tabs {
+  display: flex;
+  gap: 0;
+  margin: 24px 0 0;
+}
+
+.position-tab {
+  flex: 1;
+  padding: 16px 24px;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: none;
+  background: var(--bg-muted);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.position-tab:first-child {
+  border-radius: 10px 0 0 0;
+}
+
+.position-tab:last-child {
+  border-radius: 0 10px 0 0;
+}
+
+.position-tab:hover {
+  color: var(--text-secondary);
+}
+
+.position-tab.active[data-position="long"] {
+  background: var(--blue-light);
+  color: var(--blue);
+  border-bottom: 3px solid var(--blue);
+}
+
+.position-tab.active[data-position="short"] {
+  background: var(--red-light);
+  color: var(--red);
+  border-bottom: 3px solid var(--red);
+}
+
+/* === Trading Panel === */
+.trading-panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  padding: 28px;
+}
+
+.input-group {
+  margin-bottom: 24px;
+}
+
+.input-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.amount-input {
+  width: 100%;
+  padding: 14px 16px;
+  font-family: var(--mono);
+  font-size: 18px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.amount-input:focus {
+  border-color: var(--blue);
+}
+
+/* === Cost Display === */
+.cost-breakdown {
+  background: var(--bg-muted);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.cost-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.cost-row:not(:last-child) {
+  border-bottom: 1px solid var(--border);
+}
+
+.cost-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.cost-value {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.cost-value.large {
+  font-size: 22px;
+}
+
+/* === Payoff Info === */
+.payoff-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.payoff-item {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.payoff-item strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* === Return Display === */
+.return-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding: 12px 16px;
+  background: var(--bg);
+  border-radius: 8px;
+}
+
+.return-item {
+  text-align: center;
+}
+
+.return-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-tertiary);
+  margin-bottom: 4px;
+}
+
+.return-value {
+  font-family: var(--mono);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.return-value.positive,
+.positive {
+  color: var(--green);
+}
+
+.return-value.negative,
+.negative {
+  color: var(--red);
+}
+
+/* === Buy Button === */
+.buy-button {
+  width: 100%;
+  padding: 18px 24px;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.buy-button.btn-long {
+  background: var(--blue);
+  color: #fff;
+}
+
+.buy-button.btn-long:hover:not(:disabled) {
+  background: #1E3FA3;
+}
+
+.buy-button.btn-short {
+  background: var(--red);
+  color: #fff;
+}
+
+.buy-button.btn-short:hover:not(:disabled) {
+  background: #9A2A24;
+}
+
+.buy-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* === Positions Section === */
+.positions-section {
+  margin-top: 32px;
+  padding-top: 32px;
+  border-top: 1px solid var(--border);
+}
+
+.section-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-tertiary);
+  margin-bottom: 16px;
+}
+
+.positions-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 14px;
+  background: var(--bg-muted);
+  border-radius: 10px;
+}
+
+.position-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 12px;
+}
+
+.position-card.position-long {
+  border-left: 3px solid var(--blue);
+}
+
+.position-card.position-short {
+  border-left: 3px solid var(--red);
+}
+
+.position-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.position-type {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.position-long .position-type {
+  color: var(--blue);
+}
+
+.position-short .position-type {
+  color: var(--red);
+}
+
+.position-amount {
+  font-family: var(--mono);
+  font-size: 15px;
+  color: var(--text);
+}
+
+.position-details {
+  margin-bottom: 16px;
+}
+
+.position-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.position-row span:last-child {
+  font-family: var(--mono);
+  color: var(--text);
+}
+
+.sell-link {
+  display: block;
+  text-align: center;
+  padding: 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-tertiary);
+  text-decoration: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+
+.sell-link:hover {
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+}
+
+/* === Band Prices Table === */
+.band-prices-section {
+  margin-top: 32px;
+  padding-top: 32px;
+  border-top: 1px solid var(--border);
+}
+
+.band-prices-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.last-updated {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-surface);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+thead th {
+  text-align: left;
+  font-family: var(--mono);
+  font-weight: 400;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-strong);
+  background: var(--bg-muted);
+}
+
+td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+td.mono, .mono {
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+/* === Error States === */
+.error-message {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--red);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  z-index: 1000;
+}
+
+/* === Footer === */
+.footer {
+  margin-top: 48px;
+  padding: 24px 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  border-top: 1px solid var(--border);
+}
+
+.footer a {
+  color: var(--blue);
+  text-decoration: none;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}
+
+/* === Responsive === */
+@media (max-width: 640px) {
+  .app-container {
+    padding: 0 16px;
+  }
+
+  .header-inner {
+    padding: 0 16px;
+  }
+
+  .market-title {
+    font-size: 22px;
+  }
+
+  .position-tab {
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+
+  .trading-panel {
+    padding: 20px;
+  }
+
+  .payoff-info {
+    grid-template-columns: 1fr;
+  }
+
+  .cost-value.large {
+    font-size: 18px;
+  }
+
+  table {
+    font-size: 12px;
+  }
+
+  thead th, td {
+    padding: 10px 12px;
+  }
+}
