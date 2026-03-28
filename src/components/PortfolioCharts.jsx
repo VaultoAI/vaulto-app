@@ -10,6 +10,8 @@ import {
   ReferenceLine,
   Area,
   AreaChart,
+  ComposedChart,
+  Legend,
 } from 'recharts';
 
 import { CONFIG, BAND_META } from '../lib/config';
@@ -87,13 +89,17 @@ export function PortfolioCharts({
   const [valueHistory, setValueHistory] = useState([]);
   const [portfolioHistory, setPortfolioHistory] = useState([]);
   const [historicalValuation, setHistoricalValuation] = useState([]);
+  const [valuation24h, setValuation24h] = useState([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [isLoading24h, setIsLoading24h] = useState(false);
   const [isLoadingPortfolio, setIsLoadingPortfolio] = useState(false);
   const [historyError, setHistoryError] = useState(null);
+  const [error24h, setError24h] = useState(null);
   const [portfolioError, setPortfolioError] = useState(null);
 
   // Refs to track if we've already fetched (prevent duplicate fetches)
   const hasFetchedValuation = useRef(false);
+  const hasFetched24h = useRef(false);
   const hasFetchedPortfolio = useRef(false);
 
   // Calculate implied IPO valuation
@@ -137,6 +143,35 @@ export function PortfolioCharts({
     };
 
     fetchHistory();
+  }, [bands]);
+
+  // Fetch 24-hour implied valuation history (finer granularity)
+  useEffect(() => {
+    if (!bands || bands.length === 0) return;
+    if (hasFetched24h.current) return;
+
+    const hasTokenIds = bands.some(b => b.tokenId);
+    if (!hasTokenIds) return;
+
+    hasFetched24h.current = true;
+
+    const fetch24hHistory = async () => {
+      setIsLoading24h(true);
+      setError24h(null);
+
+      try {
+        // Fetch 1 day of data at 5-minute granularity
+        const history = await fetchHistoricalImpliedValuation(bands, '1d', 5);
+        setValuation24h(history);
+      } catch (e) {
+        console.error('Failed to fetch 24h valuation:', e);
+        setError24h(e.message);
+      } finally {
+        setIsLoading24h(false);
+      }
+    };
+
+    fetch24hHistory();
   }, [bands]);
 
   // Fetch 1-day historical portfolio value based on user's token balances (once on load)
@@ -255,7 +290,7 @@ export function PortfolioCharts({
       {/* Implied Valuation Chart - Historical from Polymarket */}
       <div className="chart-container">
         <div className="chart-header">
-          <h4>Implied Valuation History (Past Month)</h4>
+          <h4>Implied Valuation (1 Month)</h4>
           {isLoadingHistory && <span className="loading-indicator">Loading...</span>}
         </div>
 
@@ -312,6 +347,83 @@ export function PortfolioCharts({
         )}
       </div>
 
+      {/* 24h Implied Valuation Chart */}
+      <div className="chart-container">
+        <div className="chart-header">
+          <h4>Implied Valuation (24h)</h4>
+          {isLoading24h && <span className="loading-indicator">Loading...</span>}
+          {valuation24h.length >= 2 && (
+            <div className={`pnl-badge ${
+              valuation24h[valuation24h.length - 1].impliedValuation >= valuation24h[0].impliedValuation
+                ? 'pnl-positive'
+                : 'pnl-negative'
+            }`}>
+              {valuation24h[valuation24h.length - 1].impliedValuation >= valuation24h[0].impliedValuation ? '+' : ''}
+              {(((valuation24h[valuation24h.length - 1].impliedValuation - valuation24h[0].impliedValuation) / valuation24h[0].impliedValuation) * 100).toFixed(2)}%
+            </div>
+          )}
+        </div>
+
+        {valuation24h.length > 0 ? (
+          <ResponsiveContainer width="100%" height={200}>
+            <AreaChart data={valuation24h} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="valuationGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#1A7D46" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#1A7D46" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+              <XAxis
+                dataKey="timestamp"
+                tickFormatter={formatTime}
+                stroke="#888"
+                fontSize={11}
+                tickLine={false}
+                minTickGap={40}
+              />
+              <YAxis
+                stroke="#888"
+                fontSize={11}
+                tickLine={false}
+                tickFormatter={(v) => `$${(v/1000).toFixed(2)}T`}
+                domain={['auto', 'auto']}
+              />
+              <Tooltip
+                contentStyle={{
+                  background: '#1a1a2e',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                }}
+                labelFormatter={(ts) => formatDate(ts) + ' ' + formatTime(ts)}
+                formatter={(value) => [`$${(value/1000).toFixed(3)}T`, 'Implied Valuation']}
+              />
+              <Area
+                type="monotone"
+                dataKey="impliedValuation"
+                stroke="#1A7D46"
+                strokeWidth={2}
+                fill="url(#valuationGradient)"
+                dot={false}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        ) : isLoading24h ? (
+          <div className="chart-empty">
+            Fetching 24h market data...
+          </div>
+        ) : error24h ? (
+          <div className="chart-empty chart-error">
+            Failed to load 24h data: {error24h}
+          </div>
+        ) : (
+          <div className="chart-empty">
+            No 24h data available.
+          </div>
+        )}
+      </div>
+
       {/* Portfolio Value Chart - Only shown when user has positions */}
       {hasPositions && (
       <div className="chart-container">
@@ -319,9 +431,16 @@ export function PortfolioCharts({
           <h4>Portfolio Value {portfolioHistory.length > 0 ? '(24h)' : ''}</h4>
           <div className="chart-header-right">
             {isLoadingPortfolio && <span className="loading-indicator">Loading...</span>}
-            <div className={`pnl-badge ${pnl >= 0 ? 'pnl-positive' : 'pnl-negative'}`}>
-              {pnl >= 0 ? '+' : ''}{pnlPercent.toFixed(1)}%
-            </div>
+            {chartData.length >= 2 && (
+              <div className={`pnl-badge ${
+                chartData[chartData.length - 1].value >= chartData[0].value
+                  ? 'pnl-positive'
+                  : 'pnl-negative'
+              }`}>
+                {chartData[chartData.length - 1].value >= chartData[0].value ? '+' : ''}
+                {(((chartData[chartData.length - 1].value - chartData[0].value) / chartData[0].value) * 100).toFixed(2)}%
+              </div>
+            )}
           </div>
         </div>
 
@@ -349,13 +468,17 @@ export function PortfolioCharts({
                 stroke="#888"
                 fontSize={11}
                 tickLine={false}
+                minTickGap={40}
               />
               <YAxis
                 stroke="#888"
                 fontSize={11}
                 tickLine={false}
-                tickFormatter={(v) => `$${v.toFixed(0)}`}
-                domain={['dataMin - 1', 'dataMax + 1']}
+                tickFormatter={(v) => `$${v.toFixed(2)}`}
+                domain={([dataMin, dataMax]) => {
+                  const padding = (dataMax - dataMin) * 0.05 || 0.01;
+                  return [dataMin - padding, dataMax + padding];
+                }}
               />
               <Tooltip
                 contentStyle={{

@@ -17,6 +17,8 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api\/clob/, ''),
         headers: {
           'Origin': 'https://polymarket.com',
+          'Referer': 'https://polymarket.com/',
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         },
       },
     },

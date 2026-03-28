@@ -297,7 +297,16 @@ export async function fetchHistoricalImpliedValuation(bands, interval = '1m', fi
   // Track last known prices for interpolation
   const lastPrices = {};
 
-  const valuationHistory = sortedTimestamps.map(timestamp => {
+  // Determine which bands are required for valid calculation (exclude "No IPO")
+  const requiredBands = validBands.filter(band => {
+    const midpoint = band.midpoint || BAND_META[band.index]?.midpoint || 0;
+    return !band.label?.includes('No IPO') && midpoint !== 0;
+  });
+  const requiredBandIndices = new Set(requiredBands.map(b => b.index));
+
+  const valuationHistory = [];
+
+  for (const timestamp of sortedTimestamps) {
     const prices = timeMap.get(timestamp);
 
     // Update last known prices
@@ -305,16 +314,20 @@ export async function fetchHistoricalImpliedValuation(bands, interval = '1m', fi
       lastPrices[idx] = price;
     }
 
+    // Check if we have data for all required bands
+    const seenBands = Object.keys(lastPrices).map(Number);
+    const hasAllBands = [...requiredBandIndices].every(idx => seenBands.includes(idx));
+
+    // Skip this timestamp if we don't have all bands yet
+    if (!hasAllBands) continue;
+
     // Calculate implied valuation using probability-weighted average
     let totalWeight = 0;
     let weightedSum = 0;
 
-    for (const band of validBands) {
+    for (const band of requiredBands) {
       const price = lastPrices[band.index] ?? 0;
       const midpoint = band.midpoint || BAND_META[band.index]?.midpoint || 0;
-
-      // Skip "No IPO" band (usually has midpoint of 0 or label contains "No IPO")
-      if (band.label?.includes('No IPO') || midpoint === 0) continue;
 
       weightedSum += price * midpoint;
       totalWeight += price;
@@ -322,12 +335,12 @@ export async function fetchHistoricalImpliedValuation(bands, interval = '1m', fi
 
     const impliedValuation = totalWeight > 0 ? weightedSum / totalWeight : 0;
 
-    return {
+    valuationHistory.push({
       timestamp,
       impliedValuation,
       bandPrices: { ...lastPrices },
-    };
-  });
+    });
+  }
 
   log('Historical valuation computed:', {
     points: valuationHistory.length,
@@ -386,13 +399,25 @@ export async function fetchHistoricalPortfolioValue(bandBalances, fidelity = 5) 
   // Track last known prices for interpolation
   const lastPrices = {};
 
-  const portfolioHistory = sortedTimestamps.map(timestamp => {
+  // Track required token IDs (all bands with positions)
+  const requiredTokenIds = new Set(validBands.map(b => b.tokenId));
+
+  const portfolioHistory = [];
+
+  for (const timestamp of sortedTimestamps) {
     const prices = timeMap.get(timestamp);
 
     // Update last known prices
     for (const [tokenId, price] of Object.entries(prices)) {
       lastPrices[tokenId] = price;
     }
+
+    // Check if we have data for all required bands
+    const seenTokenIds = new Set(Object.keys(lastPrices));
+    const hasAllBands = [...requiredTokenIds].every(id => seenTokenIds.has(id));
+
+    // Skip this timestamp if we don't have all bands yet
+    if (!hasAllBands) continue;
 
     // Calculate portfolio value at this timestamp
     let portfolioValue = 0;
@@ -405,12 +430,12 @@ export async function fetchHistoricalPortfolioValue(bandBalances, fidelity = 5) 
       bandValues[band.tokenId] = { price, value, balance: band.balance };
     }
 
-    return {
+    portfolioHistory.push({
       timestamp,
       portfolioValue,
       bandValues,
-    };
-  });
+    });
+  }
 
   log('Portfolio history computed:', {
     points: portfolioHistory.length,
